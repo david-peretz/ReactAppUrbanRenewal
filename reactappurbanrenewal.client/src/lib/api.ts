@@ -1,5 +1,5 @@
 // API service for connecting to the server
-import { User } from '../types';
+import { User, Project } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -79,7 +79,7 @@ export const projectsApi = {
   },
   
   getById: async (id: number, token: string) => {
-    return await apiRequest<any>(`projects/${id}`, 'GET', undefined, token);
+    return await apiRequest<Project>(`projects/${id}`, 'GET', undefined, token);
   },
   
   create: async (data: any, token: string) => {

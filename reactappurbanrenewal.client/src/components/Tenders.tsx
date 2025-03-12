@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Filter, Download, Clock, CheckCircle, AlertCircle, Calendar, User, FileText, X, MapPin, Building, DollarSign, FileSpreadsheet, Mail, Phone } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Filter, Download, AlertCircle, FileText, X, MapPin, Mail, Phone } from 'lucide-react';
+import { tendersApi } from '../lib/api';
 
 interface TendersProps {
   language: string;
@@ -47,9 +48,45 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
   const [selectedTender, setSelectedTender] = useState<Tender | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [showApplicationModal, setShowApplicationModal] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  // Commented out unused states for now
+  // const [showApplicationModal, setShowApplicationModal] = useState(false);
+  // const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  
+  // New state variables for API data
+  const [tenders, setTenders] = useState<Tender[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch tenders from API
+  useEffect(() => {
+    const fetchTenders = async () => {
+      try {
+        setLoading(true);
+        // In a real app, you'd get the token from auth context
+        // For demo, we're using a dummy token
+        const tendersData = await tendersApi.getAll("dummy-token");
+        if (tendersData && Array.isArray(tendersData)) {
+          setTenders(tendersData);
+          console.log("Fetched tenders from API:", tendersData);
+        } else {
+          // Fallback to sample data if API returns empty or invalid data
+          console.warn("API returned invalid data, falling back to sample data");
+          setTenders(sampleTenders);
+        }
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching tenders:", err);
+        setError("Failed to load tenders from API, using sample data instead");
+        // Fallback to sample data if API fails
+        setTenders(sampleTenders);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenders();
+  }, []);
   
   const translations = {
     en: {
@@ -71,7 +108,7 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
       edit: 'Edit',
       delete: 'Delete',
       apply: 'Apply',
-      tenderDetails: 'Tender Details',
+      detailsHeader: 'Tender Details',
       description: 'Description',
       requirements: 'Requirements',
       documents: 'Documents',
@@ -119,7 +156,9 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
       cannotApply: 'As a local authority or government office, you cannot apply for tenders. You can only create and manage tenders.',
       applicationDetails: 'Application Details',
       submissionDate: 'Submission Date',
-      tenderDetails: 'Tender Details'
+      tenderDetails: 'Tender Details',
+      loading: 'Loading tenders...',
+      error: 'Error loading tenders'
     },
     he: {
       tenders: 'מכרזים',
@@ -140,7 +179,7 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
       edit: 'עריכה',
       delete: 'מחיקה',
       apply: 'הגש הצעה',
-      tenderDetails: 'פרטי מכרז',
+      detailsHeader: 'פרטי מכרז',
       description: 'תיאור',
       requirements: 'דרישות',
       documents: 'מסמכים',
@@ -188,15 +227,17 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
       cannotApply: 'כרשות מקומית או משרד ממשלתי, אינך יכול להגיש הצעות למכרזים. באפשרותך רק ליצור ולנהל מכרזים.',
       applicationDetails: 'פרטי הגשה',
       submissionDate: 'תאריך הגשה',
-      tenderDetails: 'פרטי מכרז'
+      tenderDetails: 'פרטי מכרז',
+      loading: 'טוען מכרזים...',
+      error: 'שגיאה בטעינת מכרזים'
     }
   };
 
   const t = translations[language as keyof typeof translations];
-  const isRTL = language === 'he';
+  const isRTL = language === 'he'; // Used for RTL layout
 
-  // Sample data
-  const tenders: Tender[] = [
+  // Sample data as a fallback
+  const sampleTenders: Tender[] = [
     { 
       id: 1, 
       name: 'פינוי-בינוי מתחם הרצל, תל אביב', 
@@ -360,8 +401,8 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
     }
   ];
 
-  // Sample applications
-  const applications: Application[] = [
+  // Sample applications (kept for future use)
+  const _applications: Application[] = [
     {
       id: 1,
       tenderId: 1,
@@ -391,7 +432,7 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
         setShowApplyModal(true);
       }
     }
-  }, [initialTenderId]);
+  }, [initialTenderId, tenders]);
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -408,7 +449,8 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
     }
   };
 
-  const getApplicationStatusBadge = (status: string) => {
+  // Utility function for application status badges (kept for future use)
+  const _getApplicationStatusBadge = (status: string) => {
     switch(status) {
       case 'submitted':
         return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">הוגש</span>;
@@ -486,6 +528,48 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
       history.pushState("", document.title, window.location.pathname);
     }
   };
+
+  // Handle creating a new tender
+  const handleCreateTender = async (tenderData: Record<string, unknown>) => {
+    try {
+      // In a real app, you'd get the token from auth context
+      await tendersApi.create(tenderData, "dummy-token");
+      // Refresh the tenders list
+      const updatedTenders = await tendersApi.getAll("dummy-token");
+      setTenders(updatedTenders);
+      alert('מכרז נוצר בהצלחה!');
+      setShowAddModal(false);
+    } catch (err) {
+      console.error("Error creating tender:", err);
+      alert('שגיאה ביצירת מכרז. נסה שנית.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">{t.loading}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -668,7 +752,7 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
           <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">{t.tenderDetails}</h2>
+                <h2 className="text-xl font-bold">{t.detailsHeader}</h2>
                 <button 
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setSelectedTender(null)}
@@ -903,111 +987,6 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
         </div>
       )}
 
-      {/* View Applicants Modal */}
-      {canCreateTenders() && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">{t.applicants}</h2>
-                <button 
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={() => {}}
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {applications.map(app => (
-                  <div 
-                    key={app.id} 
-                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => {}}
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">{app.companyName}</h3>
-                      {getApplicationStatusBadge(app.status)}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{t.submissionDate}: {app.submissionDate}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Application Details Modal */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">{t.applicationDetails}</h2>
-              <button 
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => {}}
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-medium">Application Title</h3>
-                {getApplicationStatusBadge('submitted')}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">{t.submissionDate}</p>
-                  <p className="font-medium">2023-06-15</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{t.companyName}</p>
-                  <p className="font-medium">Company Name</p>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <h4 className="font-medium mb-2">{t.proposal}</h4>
-                <p className="text-gray-600">Proposal content goes here</p>
-              </div>
-              
-              <div className="mb-4">
-                <h4 className="font-medium mb-2">{t.attachments}</h4>
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FileText size={16} className="text-gray-400 mr-2" />
-                      <span>document.pdf</span>
-                    </div>
-                    <button className="text-blue-600 hover:text-blue-800">
-                      <Download size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-3">
-              <button 
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-                onClick={() => {}}
-              >
-                {t.cancel}
-              </button>
-              <button 
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md"
-                onClick={() => {}}
-              >
-                {t.tenderDetails}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Add Tender Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1025,23 +1004,40 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
               
               <form onSubmit={(e) => {
                 e.preventDefault();
-                alert('מכרז נוצר בהצלחה!');
-                setShowAddModal(false);
+                const formData = new FormData(e.currentTarget);
+                const tenderData = {
+                  name: formData.get('name'),
+                  tenderNumber: formData.get('tenderNumber'),
+                  projectType: formData.get('projectType'),
+                  publishDate: formData.get('publishDate'),
+                  deadline: formData.get('deadline'),
+                  questionDeadline: formData.get('questionDeadline'),
+                  budget: formData.get('budget'),
+                  location: formData.get('location'),
+                  description: formData.get('description'),
+                  requirements: formData.get('requirements')?.toString().split('\n'),
+                  contactPerson: formData.get('contactPerson'),
+                  email: formData.get('email'),
+                  phone: formData.get('phone'),
+                  status: formData.get('status')
+                };
+                
+                handleCreateTender(tenderData);
               }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.name}</label>
-                    <input type="text" className="w-full p-2 border rounded-md" required />
+                    <input name="name" type="text" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.tenderNumber}</label>
-                    <input type="text" className="w-full p-2 border rounded-md" required />
+                    <input name="tenderNumber" type="text" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.projectType}</label>
-                    <select className="w-full p-2 border rounded-md" required>
+                    <select name="projectType" className="w-full p-2 border rounded-md" required>
                       <option value="tama38">{t.tama38}</option>
                       <option value="pinuiBinui">{t.pinuiBinui}</option>
                       <option value="urbanRenewalOther">{t.urbanRenewalOther}</option>
@@ -1050,57 +1046,57 @@ const Tenders: React.FC<TendersProps> = ({ language, initialTenderId = null, use
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.publishDate}</label>
-                    <input type="date" className="w-full p-2 border rounded-md" required />
+                    <input name="publishDate" type="date" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.deadline}</label>
-                    <input type="date" className="w-full p-2 border rounded-md" required />
+                    <input name="deadline" type="date" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.questionDeadline}</label>
-                    <input type="date" className="w-full p-2 border rounded-md" required />
+                    <input name="questionDeadline" type="date" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.budget}</label>
-                    <input type="text" className="w-full p-2 border rounded-md" required />
+                    <input name="budget" type="text" className="w-full p-2 border rounded-md" required placeholder="₪1,000,000" />
                   </div>
                   
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.location}</label>
-                    <input type="text" className="w-full p-2 border rounded-md" required />
+                    <input name="location" type="text" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.description}</label>
-                    <textarea className="w-full p-2 border rounded-md" rows={3} required></textarea>
+                    <textarea name="description" className="w-full p-2 border rounded-md" rows={3} required></textarea>
                   </div>
                   
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.requirements}</label>
-                    <textarea className="w-full p-2 border rounded-md" rows={4} required></textarea>
+                    <textarea name="requirements" className="w-full p-2 border rounded-md" rows={4} required placeholder="Enter each requirement on a new line"></textarea>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.contactPerson}</label>
-                    <input type="text" className="w-full p-2 border rounded-md" required />
+                    <input name="contactPerson" type="text" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.email}</label>
-                    <input type="email" className="w-full p-2 border rounded-md" required />
+                    <input name="email" type="email" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.phone}</label>
-                    <input type="tel" className="w-full p-2 border rounded-md" required />
+                    <input name="phone" type="tel" className="w-full p-2 border rounded-md" required />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.status}</label>
-                    <select className="w-full p-2 border rounded-md" required>
+                    <select name="status" className="w-full p-2 border rounded-md" required>
                       <option value="draft">{t.draft}</option>
                       <option value="open">{t.open}</option>
                     </select>
