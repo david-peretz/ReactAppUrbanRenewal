@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReactAppUrbanRenewal.Server.Models
@@ -29,7 +30,9 @@ namespace ReactAppUrbanRenewal.Server.Models
         public DateTime? ExpiryDate { get; set; }
 
         // Foreign keys
-        public int? ProjectId { get; set; }
+        public int ProjectId { get; set; }
+
+        [JsonIgnore]
         public virtual Project? Project { get; set; }
 
         public int? UploadedById { get; set; }

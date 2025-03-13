@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ReactAppUrbanRenewal.Server.Models
 {
@@ -37,8 +38,13 @@ namespace ReactAppUrbanRenewal.Server.Models
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties
+        [JsonIgnore]
         public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
+
+        [JsonIgnore]
         public virtual ICollection<Tender> Tenders { get; set; } = new List<Tender>();
+
+        [JsonIgnore]
         public virtual ICollection<PropertyValuation> PropertyValuations { get; set; } = new List<PropertyValuation>();
     }
 }

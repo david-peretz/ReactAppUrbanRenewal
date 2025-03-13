@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ReactAppUrbanRenewal.Server.Models
 {
@@ -39,6 +40,8 @@ namespace ReactAppUrbanRenewal.Server.Models
 
         // Foreign keys
         public int ProjectId { get; set; }
+
+        [JsonIgnore]
         public virtual Project Project { get; set; } = null!;
 
         public int? CreatedById { get; set; }
