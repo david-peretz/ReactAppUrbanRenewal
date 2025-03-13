@@ -390,7 +390,7 @@ namespace ReactAppUrbanRenewal.Server.Data
                     FileSize = 2500000,
                     DocumentType = "Plan",
                     UploadDate = DateTime.UtcNow.AddMonths(-5),
-                    ProjectId = jaffaProject?.Id,
+                    ProjectId = jaffaProject.Id,
                     UploadedById = context.Users.FirstOrDefault(u => u.Username == "davidcohen")?.Id
                 },
                 new Document
@@ -402,7 +402,7 @@ namespace ReactAppUrbanRenewal.Server.Data
                     FileSize = 1800000,
                     DocumentType = "Permit",
                     UploadDate = DateTime.UtcNow.AddMonths(-8),
-                    ProjectId = ramatGanProject?.Id,
+                    ProjectId = ramatGanProject.Id,
                     UploadedById = context.Users.FirstOrDefault(u => u.Username == "ronitsimoni")?.Id
                 },
                 new Document
@@ -414,7 +414,7 @@ namespace ReactAppUrbanRenewal.Server.Data
                     FileSize = 3200000,
                     DocumentType = "Plan",
                     UploadDate = DateTime.UtcNow.AddMonths(-4),
-                    ProjectId = holonProject?.Id,
+                    ProjectId = holonProject.Id,
                     UploadedById = context.Users.FirstOrDefault(u => u.Username == "yosiabraham")?.Id
                 },
                 new Document
@@ -426,7 +426,7 @@ namespace ReactAppUrbanRenewal.Server.Data
                     FileSize = 1500000,
                     DocumentType = "Contract",
                     UploadDate = DateTime.UtcNow.AddMonths(-10),
-                    ProjectId = jaffaProject?.Id,
+                    ProjectId = jaffaProject.Id,
                     UploadedById = context.Users.FirstOrDefault(u => u.Username == "michallevi")?.Id
                 }
             };
