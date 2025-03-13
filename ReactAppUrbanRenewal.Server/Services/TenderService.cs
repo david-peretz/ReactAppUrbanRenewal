@@ -81,7 +81,7 @@ namespace ReactAppUrbanRenewal.Server.Services
             return true;
         }
 
-        public async Task<bool> AwardTenderAsync(int tenderId, string awardedTo, decimal awardedAmount)
+        public async Task<bool> AwardTenderAsync(int tenderId, string awardedTo, decimal? awardedAmount)
         {
             var tender = await _context.Tenders.FindAsync(tenderId);
             if (tender == null)

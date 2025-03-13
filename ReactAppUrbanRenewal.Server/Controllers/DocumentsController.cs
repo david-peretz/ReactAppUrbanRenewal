@@ -120,7 +120,7 @@ namespace ReactAppUrbanRenewal.Server.Controllers
                 Name = request.Name,
                 Description = request.Description,
                 DocumentType = request.DocumentType,
-                ProjectId = request.ProjectId,
+                ProjectId = request.ProjectId==null?0:(int) request.ProjectId,
                 UploadedById = int.Parse(User.FindFirst("UserId")?.Value ?? "0"),
                 ExpiryDate = request.ExpiryDate
             };

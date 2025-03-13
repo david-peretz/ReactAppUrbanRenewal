@@ -7,8 +7,7 @@ namespace ReactAppUrbanRenewal.Server.Models
         [Required]
         public string AwardedTo { get; set; } = string.Empty;
 
-        [Required]
         [Range(0, double.MaxValue)]
-        public decimal AwardedAmount { get; set; }
+        public decimal? AwardedAmount { get; set; }
     }
 }

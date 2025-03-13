@@ -12,7 +12,7 @@ namespace ReactAppUrbanRenewal.Server.Services
         Task<Tender> CreateTenderAsync(Tender tender);
         Task UpdateTenderAsync(Tender tender);
         Task<bool> DeleteTenderAsync(int id);
-        Task<bool> AwardTenderAsync(int tenderId, string awardedTo, decimal awardedAmount);
+        Task<bool> AwardTenderAsync(int tenderId, string awardedTo, decimal? awardedAmount);
         Task<List<Tender>> GetTendersClosingSoonAsync(int daysToDeadline);
     }
 }
