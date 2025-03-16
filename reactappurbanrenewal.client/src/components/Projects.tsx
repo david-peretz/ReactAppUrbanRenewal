@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Search, Plus, Edit, Trash2, Filter, Download, Clock, CheckCircle, AlertCircle, Calendar, User, BarChart3, X, MapPin, Home, Building } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { projectsApi } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
+import { Search, Plus, Edit, Trash2, Filter, Download, Clock, CheckCircle, AlertCircle, Calendar, User, BarChart3, X, MapPin, Home } from 'lucide-react';
 
 interface ProjectsProps {
   language: string;
@@ -32,7 +34,7 @@ interface Project {
 }
 
 const Projects: React.FC<ProjectsProps> = ({ language }) => {
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   
   // Form state for new project
@@ -48,133 +50,79 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
     description: ''
   });
   
-  // State for projects list
-  const [projectsList, setProjectsList] = useState([
-    { 
-      id: 1, 
-      name: 'פינוי-בינוי, יפו', 
-      location: 'שכונת יפו ד׳, תל אביב-יפו', 
-      deadline: '2026-12-31', 
-      status: 'inProgress',
-      progress: 45,
-      description: 'פרויקט פינוי-בינוי בשכונת יפו ד׳, הכולל הריסת 8 בניינים ישנים ובניית 4 מגדלי מגורים חדשים עם סה"כ 320 יחידות דיור.',
-      startDate: '2022-03-15',
-      manager: 'דוד כהן',
-      team: ['מיכל לוי', 'יוסי אברהם', 'רונית שמעוני'],
-      tasks: [
-        { id: 1, name: 'השגת הסכמות דיירים', assignedTo: 'מיכל לוי', dueDate: '2022-12-15', completed: true },
-        { id: 2, name: 'הגשת תוכניות לוועדה המקומית', assignedTo: 'יוסי אברהם', dueDate: '2023-03-20', completed: true },
-        { id: 3, name: 'קבלת אישור הוועדה המחוזית', assignedTo: 'רונית שמעוני', dueDate: '2023-09-30', completed: false },
-        { id: 4, name: 'הוצאת היתרי בנייה', assignedTo: 'דוד כהן', dueDate: '2024-02-28', completed: false }
-      ],
-      budget: '₪450,000,000',
-      projectType: 'pinuiBinui',
-      units: 320,
-      approvalStatus: 'בתהליך אישור בוועדה המחוזית',
-      constructionStatus: 'טרם החל',
-      salesStatus: '30% נמכר'
-    },
-    { 
-      id: 2, 
-      name: 'תמ"א 38/2, רמת גן', 
-      location: 'רחוב ביאליק 45, רמת גן', 
-      deadline: '2025-06-30', 
-      status: 'inProgress',
-      progress: 65,
-      description: 'פרויקט תמ"א 38/2 (הריסה ובנייה) ברחוב ביאליק ברמת גן. הפרויקט כולל הריסת מבנה בן 4 קומות והקמת בניין חדש בן 9 קומות עם 36 יחידות דיור.',
-      startDate: '2021-08-10',
-      manager: 'רונית שמעוני',
-      team: ['אבי גולן', 'מיכל לוי'],
-      tasks: [
-        { id: 1, name: 'השגת הסכמות דיירים', assignedTo: 'רונית שמעוני', dueDate: '2021-12-25', completed: true },
-        { id: 2, name: 'הגשת בקשה להיתר', assignedTo: 'מיכל לוי', dueDate: '2022-03-10', completed: true },
-        { id: 3, name: 'קבלת היתר בנייה', assignedTo: 'אבי גולן', dueDate: '2022-09-30', completed: true },
-        { id: 4, name: 'פינוי דיירים', assignedTo: 'רונית שמעוני', dueDate: '2023-01-15', completed: true },
-        { id: 5, name: 'הריסת המבנה', assignedTo: 'אבי גולן', dueDate: '2023-02-28', completed: true },
-        { id: 6, name: 'בניית שלד', assignedTo: 'אבי גולן', dueDate: '2023-12-31', completed: false }
-      ],
-      budget: '₪85,000,000',
-      projectType: 'tama38',
-      units: 36,
-      approvalStatus: 'התקבל היתר בנייה',
-      constructionStatus: 'בשלבי בנייה - שלד',
-      salesStatus: '80% נמכר'
-    },
-    { 
-      id: 3, 
-      name: 'התחדשות מרכז העיר, חולון', 
-      location: 'מתחם העיריה, חולון', 
-      deadline: '2028-12-31', 
-      status: 'pending',
-      progress: 15,
-      description: 'פרויקט התחדשות עירונית במתחם העיריה בחולון, הכולל הקמת מתחם מגורים, מסחר ומשרדים. הפרויקט כולל 5 מגדלים עם סה"כ 450 יחידות דיור ו-15,000 מ"ר שטחי מסחר ומשרדים.',
-      startDate: '2022-01-01',
-      manager: 'יוסי אברהם',
-      team: ['דוד כהן', 'אבי גולן'],
-      tasks: [
-        { id: 1, name: 'הכנת תוכנית אב למתחם', assignedTo: 'יוסי אברהם', dueDate: '2022-06-15', completed: true },
-        { id: 2, name: 'הגשת תוכנית לוועדה המקומית', assignedTo: 'דוד כהן', dueDate: '2022-12-01', completed: true },
-        { id: 3, name: 'דיון בוועדה המקומית', assignedTo: 'אבי גולן', dueDate: '2023-03-15', completed: false },
-        { id: 4, name: 'העברה לוועדה המחוזית', assignedTo: 'יוסי אברהם', dueDate: '2023-06-30', completed: false }
-      ],
-      budget: '₪750,000,000',
-      projectType: 'urbanRenewalOther',
-      units: 450,
-      approvalStatus: 'בתהליך אישור בוועדה המקומית',
-      constructionStatus: 'טרם החל',
-      salesStatus: 'טרם החל'
-    },
-    { 
-      id: 4, 
-      name: 'תמ"א 38/1, תל אביב', 
-      location: 'רחוב ארלוזורוב 78, תל אביב', 
-      deadline: '2024-08-31', 
-      status: 'delayed',
-      progress: 40,
-      description: 'פרויקט תמ"א 38/1 (חיזוק ותוספת) ברחוב ארלוזורוב בתל אביב. הפרויקט כולל חיזוק מבנה קיים, הוספת 2 קומות ותוספת של 8 יחידות דיור חדשות.',
-      startDate: '2021-05-01',
-      manager: 'מיכל לוי',
-      team: ['רונית שמעוני'],
-      tasks: [
-        { id: 1, name: 'השגת הסכמות דיירים', assignedTo: 'מיכל לוי', dueDate: '2021-08-20', completed: true },
-        { id: 2, name: 'הגשת בקשה להיתר', assignedTo: 'מיכל לוי', dueDate: '2021-11-10', completed: true },
-        { id: 3, name: 'קבלת היתר בנייה', assignedTo: 'רונית שמעוני', dueDate: '2022-05-30', completed: true },
-        { id: 4, name: 'תחילת עבודות חיזוק', assignedTo: 'רונית שמעוני', dueDate: '2022-08-15', completed: true },
-        { id: 5, name: 'סיום עבודות חיזוק', assignedTo: 'רונית שמעוני', dueDate: '2023-02-28', completed: false }
-      ],
-      budget: '₪12,000,000',
-      projectType: 'tama38',
-      units: 8,
-      approvalStatus: 'התקבל היתר בנייה',
-      constructionStatus: 'בשלבי ביצוע - חיזוק',
-      salesStatus: '100% נמכר'
-    },
-    { 
-      id: 5, 
-      name: 'פינוי-בינוי, קרית אונו', 
-      location: 'שכונת רייספלד, קרית אונו', 
-      deadline: '2027-10-15', 
-      status: 'inProgress',
-      progress: 30,
-      description: 'פרויקט פינוי-בינוי בשכונת רייספלד בקרית אונו, הכולל הריסת  12 בניינים ישנים ובניית 6 מגדלי מגורים חדשים עם סה"כ 480 יחידות דיור.',
-      startDate: '2022-06-01',
-      manager: 'אבי גולן',
-      team: ['דוד כהן', 'יוסי אברהם', 'מיכל לוי'],
-      tasks: [
-        { id: 1, name: 'השגת הסכמות דיירים', assignedTo: 'אבי גולן', dueDate: '2023-01-15', completed: true },
-        { id: 2, name: 'הכנת תוכנית בינוי', assignedTo: 'מיכל לוי', dueDate: '2023-04-15', completed: true },
-        { id: 3, name: 'הגשת תוכנית לוועדה המקומית', assignedTo: 'דוד כהן', dueDate: '2023-07-30', completed: true },
-        { id: 4, name: 'אישור הוועדה המקומית', assignedTo: 'יוסי אברהם', dueDate: '2023-12-31', completed: false },
-        { id: 5, name: 'העברה לוועדה המחוזית', assignedTo: 'אבי גולן', dueDate: '2024-02-28', completed: false }
-      ],
-      budget: '₪650,000,000',
-      projectType: 'pinuiBinui',
-      units: 480,
-      approvalStatus: 'בתהליך אישור בוועדה המקומית',
-      constructionStatus: 'טרם החל',
-      salesStatus: '25% נמכר'
-    },
-  ]);
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
+  const { user: _user } = useAuth();
+
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        // Get projects from API without token (using cookies for auth)
+        const fetchedProjects = await projectsApi.getAll();
+        
+        if (fetchedProjects && fetchedProjects.length > 0) {
+          // Transform API data to match our component's expected format
+          const transformedProjects = fetchedProjects.map(project => ({
+            id: project.id,
+            name: project.name,
+            location: project.location,
+            deadline: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : 'N/A',
+            status: project.status ? project.status.toLowerCase() : 'pending',
+            progress: getProgressByStatus(project.status),
+            description: project.description || '',
+            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : 'N/A',
+            manager: "דוד כהן", // Default manager
+            team: ['מיכל לוי', 'יוסי אברהם'], // Default team members
+            tasks: [], // API doesn't provide tasks yet
+            budget: `₪${project.budget?.toLocaleString() || '0'}`,
+            projectType: getProjectType(project.name),
+            units: project.totalUnits || 0,
+            approvalStatus: 'בתהליך אישור',
+            constructionStatus: project.status === 'InProgress' ? 'בשלבי בנייה' : 'טרם החל',
+            salesStatus: getDefaultSalesStatus(project.status)
+          }));
+          
+          setProjectsList(transformedProjects);
+        }
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+        setError('Failed to load projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Helper functions for transforming data
+  const getProgressByStatus = (status: string): number => {
+    switch(status) {
+      case 'Completed': return 100;
+      case 'InProgress': return 50;
+      case 'Delayed': return 25;
+      case 'Planning': 
+      case 'Pending': 
+      default: return 10;
+    }
+  };
+
+  const getProjectType = (name: string): string => {
+    if (name.includes('תמ"א')) return 'tama38';
+    if (name.includes('פינוי-בינוי')) return 'pinuiBinui';
+    return 'urbanRenewalOther';
+  };
+
+  const getDefaultSalesStatus = (status: string): string => {
+    switch(status) {
+      case 'Completed': return '100% נמכר';
+      case 'InProgress': return '50% נמכר';
+      default: return 'טרם החל';
+    }
+  };
   
   const translations = {
     en: {
@@ -263,10 +211,10 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
     }
   };
 
-  const t = translations[language];
-  const isRTL = language === 'he';
+  const t = translations[language as keyof typeof translations];
+  const _isRTL = language === 'he';
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch(status) {
       case 'completed':
         return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">{t.completed}</span>;
@@ -281,7 +229,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
     }
   };
 
-  const getProjectTypeBadge = (type) => {
+  const getProjectTypeBadge = (type: string) => {
     switch(type) {
       case 'tama38':
         return <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">{t.tama38}</span>;
@@ -294,12 +242,12 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
     }
   };
 
-  const handleProjectClick = (project) => {
+  const handleProjectClick = (project: Project) => {
     setSelectedProject(project);
   };
 
   // Function to handle form submission for new project
-  const handleAddProject = (e) => {
+  const handleAddProject = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Create a new project object
@@ -321,7 +269,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
       ],
       budget: newProject.budget,
       projectType: newProject.projectType,
-      units: parseInt(newProject.units),
+      units: parseInt(newProject.units.toString()),
       approvalStatus: 'טרם הוגש',
       constructionStatus: 'טרם החל',
       salesStatus: 'טרם החל'
@@ -349,7 +297,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
   };
   
   // Handle form input changes
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewProject({
       ...newProject,
@@ -451,7 +399,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
                       className="text-blue-600 hover:text-blue-900 mr-3"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         // Handle edit
                       }}
@@ -460,7 +408,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                     </button>
                     <button 
                       className="text-red-600 hover:text-red-900"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         // Handle delete
                       }}
@@ -736,25 +684,3 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                 <div className="flex justify-end space-x-3">
                   <button 
                     type="button"
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-                    onClick={() => setShowAddModal(false)}
-                  >
-                    {t.cancel}
-                  </button>
-                  <button 
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
-                  >
-                    {t.save}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Projects;

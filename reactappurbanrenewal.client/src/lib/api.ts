@@ -74,87 +74,89 @@ export const authApi = {
 
 // Projects API
 export const projectsApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('projects', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<Project>(`projects/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: any, token: string) => {
+  create: async (data: any, token?: string) => {
     return await apiRequest<any>('projects', 'POST', data, token);
   },
   
-  update: async (id: number, data: any, token: string) => {
+  update: async (id: number, data: any, token?: string) => {
     return await apiRequest<any>(`projects/${id}`, 'PUT', data, token);
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`projects/${id}`, 'DELETE', undefined, token);
   }
 };
 
 // Tenders API
 export const tendersApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('tenders', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<any>(`tenders/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: any, token: string) => {
+  create: async (data: any, token?: string) => {
     return await apiRequest<any>('tenders', 'POST', data, token);
   },
   
-  update: async (id: number, data: any, token: string) => {
+  update: async (id: number, data: any, token?: string) => {
     return await apiRequest<any>(`tenders/${id}`, 'PUT', data, token);
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`tenders/${id}`, 'DELETE', undefined, token);
   }
 };
 
 // Customers API
 export const customersApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('customers', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<any>(`customers/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: any, token: string) => {
+  create: async (data: any, token?: string) => {
     return await apiRequest<any>('customers', 'POST', data, token);
   },
   
-  update: async (id: number, data: any, token: string) => {
+  update: async (id: number, data: any, token?: string) => {
     return await apiRequest<any>(`customers/${id}`, 'PUT', data, token);
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`customers/${id}`, 'DELETE', undefined, token);
   }
 };
 
 // Documents API
 export const documentsApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('documents', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<any>(`documents/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: FormData, token: string) => {
-    const headers: HeadersInit = {
-      'Authorization': `Bearer ${token}`,
-    };
+  create: async (data: FormData, token?: string) => {
+    const headers: HeadersInit = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     const response = await fetch(`${API_BASE_URL}/documents`, {
       method: 'POST',
@@ -170,53 +172,53 @@ export const documentsApi = {
     return await response.json();
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`documents/${id}`, 'DELETE', undefined, token);
   }
 };
 
 // Property Valuations API
 export const propertyValuationsApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('propertyvaluations', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<any>(`propertyvaluations/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: any, token: string) => {
+  create: async (data: any, token?: string) => {
     return await apiRequest<any>('propertyvaluations', 'POST', data, token);
   },
   
-  update: async (id: number, data: any, token: string) => {
+  update: async (id: number, data: any, token?: string) => {
     return await apiRequest<any>(`propertyvaluations/${id}`, 'PUT', data, token);
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`propertyvaluations/${id}`, 'DELETE', undefined, token);
   }
 };
 
 // Reports API
 export const reportsApi = {
-  getAll: async (token: string) => {
+  getAll: async (token?: string) => {
     return await apiRequest<any[]>('reports', 'GET', undefined, token);
   },
   
-  getById: async (id: number, token: string) => {
+  getById: async (id: number, token?: string) => {
     return await apiRequest<any>(`reports/${id}`, 'GET', undefined, token);
   },
   
-  create: async (data: any, token: string) => {
+  create: async (data: any, token?: string) => {
     return await apiRequest<any>('reports', 'POST', data, token);
   },
   
-  update: async (id: number, data: any, token: string) => {
+  update: async (id: number, data: any, token?: string) => {
     return await apiRequest<any>(`reports/${id}`, 'PUT', data, token);
   },
   
-  delete: async (id: number, token: string) => {
+  delete: async (id: number, token?: string) => {
     return await apiRequest<void>(`reports/${id}`, 'DELETE', undefined, token);
   }
 };
