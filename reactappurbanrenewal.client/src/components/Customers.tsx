@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter, Download, Mail, Phone, X } from 'lucide-react';
 
 interface CustomersProps {
@@ -7,23 +8,33 @@ interface CustomersProps {
 
 interface Customer {
   id: number;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  lastContact: string;
-  totalDeals: string;
-  address: string;
-  notes: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  phoneNumber?: string;
+  status?: string;
+  lastContact?: string;
+  totalDeals?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  notes?: string;
   customerType: string;
   budget?: string;
   preferredLocation?: string;
   propertyType?: string;
+  identificationNumber?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const Customers: React.FC<CustomersProps> = ({ language }) => {
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Form state for new customer
   const [newCustomer, setNewCustomer] = useState({
@@ -119,6 +130,40 @@ const Customers: React.FC<CustomersProps> = ({ language }) => {
       propertyType: 'פרויקטי תמ"א 38'
     },
   ]);
+
+  // Fetch customers from API
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get('/api/customers');
+        console.log('Customers response:', response.data);
+        // Handle both regular array and $values format from ASP.NET Core
+        let customersData = response.data;
+        if (customersData && customersData.$values) {
+          customersData = customersData.$values;
+        }
+        // Ensure we have an array
+        customersData = Array.isArray(customersData) ? customersData : [];
+        // Map server data to match UI expectations
+        const mappedCustomers = customersData.map((customer: Customer) => ({
+          ...customer,
+          name: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+          phone: customer.phone || customer.phoneNumber,
+        }));
+        setCustomersList(mappedCustomers);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+        setError('Failed to load customers. Please try again later.');
+        setLoading(false);
+        // Keep demo data as fallback
+      }
+    };
+
+    fetchCustomers();
+  }, []);
   
   const translations = {
     en: {
@@ -195,10 +240,10 @@ const Customers: React.FC<CustomersProps> = ({ language }) => {
     }
   };
 
-  const t = translations[language];
+  const t = translations[language as keyof typeof translations];
   const isRTL = language === 'he';
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string): JSX.Element => {
     if (status === 'active') {
       return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">{t.active}</span>;
     } else {
@@ -206,12 +251,12 @@ const Customers: React.FC<CustomersProps> = ({ language }) => {
     }
   };
 
-  const handleCustomerClick = (customer) => {
+  const handleCustomerClick = (customer: Customer) => {
     setSelectedCustomer(customer);
   };
 
   // Function to handle form submission for new customer
-  const handleAddCustomer = (e) => {
+  const handleAddCustomer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Create a new customer object
@@ -256,7 +301,7 @@ const Customers: React.FC<CustomersProps> = ({ language }) => {
   };
   
   // Handle form input changes
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewCustomer({
       ...newCustomer,
@@ -295,6 +340,26 @@ const Customers: React.FC<CustomersProps> = ({ language }) => {
           </button>
         </div>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md mb-4">
+          <p>Loading customers...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 text-sm underline"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">

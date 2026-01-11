@@ -25,7 +25,7 @@ namespace ReactAppUrbanRenewal.Server.Services
         public async Task<List<Project>> GetAllProjectsAsync()
         {
             return await _context.Projects
-                .Include(p => p.Documents)
+                .AsNoTracking()
                 .ToListAsync();
         }
 

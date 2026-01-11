@@ -10,26 +10,36 @@ interface Project {
   id: number;
   name: string;
   location: string;
-  deadline: string;
+  deadline?: string;
+  endDate?: string;
   status: string;
-  progress: number;
-  description: string;
+  progress?: number;
+  description?: string;
   startDate: string;
-  manager: string;
-  team: string[];
-  tasks: {
+  manager?: string;
+  team?: string[];
+  tasks?: {
     id: number;
     name: string;
     assignedTo: string;
     dueDate: string;
     completed: boolean;
   }[];
-  budget: string;
-  projectType: string;
-  units: number;
-  approvalStatus: string;
-  constructionStatus: string;
-  salesStatus: string;
+  budget: number;
+  projectType?: string;
+  units?: number;
+  totalUnits?: number;
+  approvalStatus?: string;
+  constructionStatus?: string;
+  salesStatus?: string;
+  city?: string;
+  street?: string;
+  buildingNumber?: string;
+  landArea?: number;
+  buildingArea?: number;
+  currentOccupancy?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const Projects: React.FC<ProjectsProps> = ({ language }) => {
@@ -154,17 +164,20 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
   const t = translations[language];
 
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    const normalizedStatus = status?.toLowerCase();
+    switch(normalizedStatus) {
       case 'completed':
         return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">{t.completed}</span>;
-      case 'inProgress':
+      case 'inprogress':
         return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">{t.inProgress}</span>;
+      case 'planning':
       case 'pending':
         return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">{t.pending}</span>;
+      case 'onhold':
       case 'delayed':
         return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">{t.delayed}</span>;
       default:
-        return null;
+        return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">{status}</span>;
     }
   };
 
@@ -188,7 +201,15 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
       setError(null);
       try {
         const response = await axios.get('/api/projects');
-        setProjectsList(response.data);
+        console.log('Projects response:', response.data);
+        // Handle both regular array and $values format from ASP.NET Core with ReferenceHandler.Preserve
+        let projectsData = response.data;
+        if (projectsData && projectsData.$values) {
+          projectsData = projectsData.$values;
+        }
+        // Ensure we have an array
+        projectsData = Array.isArray(projectsData) ? projectsData : [];
+        setProjectsList(projectsData);
       } catch (err) {
         console.error('Error fetching projects:', err);
         setError('Failed to load projects. Please try again later.');
@@ -211,7 +232,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
               { id: 3, name: 'קבלת אישור הוועדה המחוזית', assignedTo: 'רונית שמעוני', dueDate: '2023-09-30', completed: false },
               { id: 4, name: 'הוצאת היתרי בנייה', assignedTo: 'דוד כהן', dueDate: '2024-02-28', completed: false }
             ],
-            budget: '₪450,000,000',
+            budget: 450000000,
             projectType: 'pinuiBinui',
             units: 320,
             approvalStatus: 'בתהליך אישור בוועדה המחוזית',
@@ -400,13 +421,13 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">{project.name}</div>
-                      <div className="mt-1">{getProjectTypeBadge(project.projectType)}</div>
+                      <div className="mt-1">{project.projectType ? getProjectTypeBadge(project.projectType) : null}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-gray-500">{project.location}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{project.deadline}</div>
+                      <div className="text-gray-500">{project.endDate || project.deadline || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(project.status)}
@@ -415,15 +436,15 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
                         <div 
                           className={`h-2.5 rounded-full ${
-                            project.status === 'completed' ? 'bg-green-500' :
-                            project.status === 'inProgress' ? 'bg-blue-500' :
-                            project.status === 'pending' ? 'bg-yellow-500' :
+                            project.status === 'completed' || project.status === 'Completed' ? 'bg-green-500' :
+                            project.status === 'inProgress' || project.status === 'InProgress' ? 'bg-blue-500' :
+                            project.status === 'pending' || project.status === 'Planning' ? 'bg-yellow-500' :
                             'bg-red-500'
                           }`} 
-                          style={{ width: `${project.progress}%` }}
+                          style={{ width: `${project.progress || 0}%` }}
                         ></div>
                       </div>
-                      <span className="text-xs text-gray-500 mt-1">{project.progress}%</span>
+                      <span className="text-xs text-gray-500 mt-1">{project.progress || 0}%</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button 
@@ -477,7 +498,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Calendar size={16} className="mr-2" />
-                    <span>{selectedProject.deadline}</span>
+                    <span>{selectedProject.endDate || selectedProject.deadline || 'Not set'}</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Clock size={16} className="mr-2" />
@@ -485,31 +506,39 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                   </div>
                   <div className="flex items-center text-gray-600">
                     <BarChart3 size={16} className="mr-2" />
-                    <span>{selectedProject.budget}</span>
+                    <span>₪{selectedProject.budget?.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Home size={16} className="mr-2" />
-                    <span>{selectedProject.units} יח"ד</span>
+                    <span>{selectedProject.totalUnits || selectedProject.units || 0} יח"ד</span>
                   </div>
                 </div>
                 <div className="mb-4">
                   <h4 className="font-medium mb-2">{t.description}</h4>
-                  <p className="text-gray-600">{selectedProject.description}</p>
+                  <p className="text-gray-600">{selectedProject.description || 'No description available'}</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="bg-blue-50 p-3 rounded-md">
-                    <h5 className="font-medium text-blue-700 mb-2">{t.approvalStatus}</h5>
-                    <p className="text-blue-600">{selectedProject.approvalStatus}</p>
+                {(selectedProject.approvalStatus || selectedProject.constructionStatus || selectedProject.salesStatus) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {selectedProject.approvalStatus && (
+                      <div className="bg-blue-50 p-3 rounded-md">
+                        <h5 className="font-medium text-blue-700 mb-2">{t.approvalStatus}</h5>
+                        <p className="text-blue-600">{selectedProject.approvalStatus}</p>
+                      </div>
+                    )}
+                    {selectedProject.constructionStatus && (
+                      <div className="bg-green-50 p-3 rounded-md">
+                        <h5 className="font-medium text-green-700 mb-2">{t.constructionStatus}</h5>
+                        <p className="text-green-600">{selectedProject.constructionStatus}</p>
+                      </div>
+                    )}
+                    {selectedProject.salesStatus && (
+                      <div className="bg-purple-50 p-3 rounded-md">
+                        <h5 className="font-medium text-purple-700 mb-2">{t.salesStatus}</h5>
+                        <p className="text-purple-600">{selectedProject.salesStatus}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <h5 className="font-medium text-green-700 mb-2">{t.constructionStatus}</h5>
-                    <p className="text-green-600">{selectedProject.constructionStatus}</p>
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-md">
-                    <h5 className="font-medium text-purple-700 mb-2">{t.salesStatus}</h5>
-                    <p className="text-purple-600">{selectedProject.salesStatus}</p>
-                  </div>
-                </div>
+                )}
               </div>
               
               <div className="mb-6">
@@ -517,16 +546,19 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                 <div className="bg-gray-50 p-4 rounded-md">
                   <div className="flex items-center mb-3">
                     <User size={16} className="mr-2 text-blue-600" />
-                    <span className="font-medium">{selectedProject.manager}</span>
+                    <span className="font-medium">{selectedProject.manager || 'N/A'}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded ml-2">{t.manager}</span>
                   </div>
                   <div className="space-y-2">
-                    {selectedProject.team.map((member, index) => (
+                    {selectedProject.team && Array.isArray(selectedProject.team) && selectedProject.team.map((member, index) => (
                       <div key={index} className="flex items-center">
                         <User size={16} className="mr-2 text-gray-500" />
                         <span>{member}</span>
                       </div>
                     ))}
+                    {(!selectedProject.team || !Array.isArray(selectedProject.team) || selectedProject.team.length === 0) && (
+                      <p className="text-gray-500 text-sm">No team members assigned</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -544,7 +576,7 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedProject.tasks.map((task) => (
+                      {selectedProject.tasks && Array.isArray(selectedProject.tasks) && selectedProject.tasks.map((task) => (
                         <tr key={task.id} className="border-b">
                           <td className="py-2">{task.name}</td>
                           <td className="py-2">{task.assignedTo}</td>
@@ -564,6 +596,11 @@ const Projects: React.FC<ProjectsProps> = ({ language }) => {
                           </td>
                         </tr>
                       ))}
+                      {(!selectedProject.tasks || !Array.isArray(selectedProject.tasks) || selectedProject.tasks.length === 0) && (
+                        <tr>
+                          <td colSpan={4} className="py-4 text-center text-gray-500">No tasks available</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
