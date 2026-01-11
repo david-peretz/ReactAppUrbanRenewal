@@ -80,14 +80,19 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
+// Only use static files and fallback in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.MapFallbackToFile("/index.html");
+}
+
 app.UseHttpsRedirection();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapFallbackToFile("/index.html");
 
 // Seed the database when the application starts
 using (var scope = app.Services.CreateScope())
